@@ -1,4 +1,4 @@
-dag_type: typed
+dag_type: spec
 description: Generated workflow from UI.
 name: econometric_macroeconomic_analysis
 nodes:
@@ -32,6 +32,65 @@ nodes:
         tests)
       key: is_model_valid
       type: bool
+    prd:
+      conceptual_info: Core node for econometric forecasting that synthesizes trend
+        patterns, validated drivers, and potential drivers to build and validate predictive
+        models. Controls for statistical issues like multicollinearity while generating
+        forward-looking economic performance metrics.
+      docstring:
+        examples:
+        - lines:
+          - model = apply_econometric_models(
+          - '    trend_analysis={'
+          - '        ''trend_directions'': [''upward''],'
+          - '        ''trend_magnitudes'': [0.05]'
+          - '    },'
+          - '    key_drivers={'
+          - '        ''key_variables'': [''GDP'', ''CPI''],'
+          - '        ''importance_scores'': [0.85, 0.72]'
+          - '    },'
+          - '    potential_drivers={''potential_drivers'': [''Interest Rate'']}'
+          - )
+          - model['model_name'], len(model['forecast_values'])
+          output: ("'Vector Autoregression', 12)
+        - lines:
+          - 'try:'
+          - '    apply_econometric_models({'
+          - '        ''trend_directions'': [''stable''],'
+          - '        ''trend_magnitudes'': [0.0]'
+          - '    }, {'
+          - '        ''key_variables'': [],'
+          - '        ''importance_scores'': []'
+          - '    }, {'
+          - '        ''potential_drivers'': [''Unemployment'']'
+          - '    })'
+          - 'except ValueError as e:'
+          - '    str(e)'
+          output: '''No valid drivers available after filtering'''
+        parameters:
+        - description: Results from conduct_trend_analysis including trend_directions,
+            seasonality_patterns, and trend_magnitudes
+          name: trend_analysis
+          type: Dict[str, List]
+        - description: Significant drivers from identify_key_macroeconomic_drivers
+            with importance_scores > 0.7
+          name: key_drivers
+          type: Dict[str, List]
+        - description: Candidate variables from identify_potential_macroeconomic_drivers
+          name: potential_drivers
+          type: Dict[str, List[str]]
+        raises:
+        - description: If no significant drivers exist after multicollinearity checks
+          type: ValueError
+        - description: When model convergence issues occur during optimization
+          type: RuntimeWarning
+        returns:
+          description: Structured dictionary containing model specification, forecasts,
+            validation metrics, and diagnostic results.
+          type: Dict[str, Union[str, List, bool]]
+        summary: Constructs and validates econometric models using statistically significant
+          macroeconomic drivers, trend patterns, and potential drivers to produce
+          macroeconomic forecasts.
     prompt: Apply established econometric models (e.g., Vector Autoregression, Unobserved
       Components Model) to forecast macroeconomic performance, incorporating identified
       key drivers and controlling for potential issues (e.g., multicollinearity, omitted
@@ -59,11 +118,57 @@ nodes:
         and preprocessing.
       key: notes
       type: str
+    prd:
+      conceptual_info: This node collects macroeconomic data sources specified by
+        user-defined objectives and converts heterogeneous datasets into standardized
+        formats. It automates unit conversion, temporal alignment, and data validation
+        to prepare inputs for trend analysis and econometric modeling.
+      docstring:
+        examples:
+        - lines:
+          - collect_economic_data(['GDP growth', 'Inflation control'], ['GDP growth
+            rate', 'CPI inflation rate'])
+          output: '{''data_source_names'': [''Bureau of Labor Statistics'', ''World
+            Bank''], ''data_records_count'': 240, ''preprocessing_successful'': True,
+            ''notes'': ''''}'
+        - lines:
+          - collect_economic_data(['Employment level'], ['Unemployment rate'], source_overrides=['Eurostat'])
+          output: '{''data_source_names'': [''Eurostat''], ''data_records_count'':
+            120, ''preprocessing_successful'': False, ''notes'': ''Eurostat data contained
+            inconsistent temporal resolution, imputation used''}'
+        parameters:
+        - description: List of macroeconomic objectives (e.g., GDP growth, inflation
+            control) guiding data collection priorities.
+          name: objectives
+          type: List[str]
+        - description: Key performance metrics (e.g., GDP growth rate, CPI inflation)
+            to extract and normalize.
+          name: metrics
+          type: List[str]
+        raises:
+        - description: If unable to access a required data source API or database.
+          type: ConnectionError
+        - description: If preprocessing steps fail due to incompatible data formats
+            or missing required fields.
+          type: ValueError
+        returns:
+          description: Dictionary containing formatted data sources, record counts,
+            preprocessing status, and operational notes.
+          type: Dict[str, Union[List[str], int, bool, str]]
+        summary: Collects macroeconomic data from specified sources, performs normalization,
+          and returns structured output for downstream analysis.
     prompt: Source and extract macroeconomic data from reputable sources (e.g., Bureau
-      of Labor Statistics, World Bank), including necessary adjustments and normalization.
+      of Labor Statistics, World Bank), aligning with defined objectives and metrics
+      from define_macroeconomic_objectives. Perform normalization, unit consistency
+      checks, and missing data imputation.
   conduct_preliminary_data_analysis:
     agent: false
-    description: Analyze the macroeconomic data to identify potential trends and patterns.
+    description: This node performs an initial exploratory analysis of the macroeconomic
+      time‑series data collected in previous steps. It computes simple trend estimates
+      (e.g., linear regression slopes or growth rates), flags any statistically significant
+      upward or downward movements, and checks for outliers or irregularities that
+      may warrant further investigation. The output summarizes the detected trends,
+      their quantitative strengths, and whether any anomalies were found.
     name: conduct_preliminary_data_analysis
     nodes_depended_on:
     - define_macroeconomic_objectives
@@ -80,6 +185,68 @@ nodes:
         during preliminary analysis
       key: anomalies_detected
       type: bool
+    prd:
+      conceptual_info: Conduct_preliminary_data_analysis extracts high‑level trend
+        signals and anomaly flags from macroeconomic time‑series to inform subsequent
+        model specification and driver selection.
+      docstring:
+        examples:
+        - lines:
+          - import pandas as pd
+          - df = pd.DataFrame({
+          - '    ''date'': pd.date_range(''2020-01-01'', periods=24, freq=''M''),'
+          - '    ''GDP_growth'': [2.5, 2.7, 2.6, 2.8, 3.0, 3.1, 3.3, 3.4, 3.5, 3.6,
+            3.8, 4.0, 4.1, 4.3, 4.5, 4.6, 4.7, 4.9, 5.0, 5.1, 5.3, 5.4, 5.6, 5.8]'
+          - '})'
+          - df.set_index('date', inplace=True)
+          - trends, strengths, anomalies = conduct_preliminary_data_analysis(df, ['GDP_growth'])
+          - print(trends)
+          - print(strengths)
+          - print(anomalies)
+          output: '[''upward'']
+
+            [0.045]
+
+            False'
+        - lines:
+          - df['inflation'] = [2.1, 2.3, 2.2, 2.5, 2.7, 2.6, 2.8, 3.0, 3.1, 3.2, 3.4,
+            3.5, 3.6, 3.8, 4.0, 4.1, 4.2, 4.3, 4.5, 4.6, 4.8, 5.0, 5.2, 5.4]
+          - trends, strengths, anomalies = conduct_preliminary_data_analysis(df, ['GDP_growth',
+            'inflation'], window_size=6)
+          - print(trends)
+          - print(strengths)
+          - print(anomalies)
+          output: '[''upward'', ''upward'']
+
+            [0.048, 0.054]
+
+            True'
+        parameters:
+        - description: Multivariate time‑series of macroeconomic indicators with a
+            DatetimeIndex. Columns correspond to metrics specified in the parent node
+            'define_macroeconomic_objectives'.
+          name: data
+          type: pandas.DataFrame
+        - description: List of column names in `data` that represent the macroeconomic
+            metrics to analyze.
+          name: metrics
+          type: List[str]
+        - description: Size of the rolling window (in periods) used to compute local
+            trend slopes. Default is 12 (months).
+          name: window_size
+          type: int
+        raises:
+        - description: Raised if `data` is empty or missing any of the specified `metrics`.
+          type: ValueError
+        - description: Raised if `data` is not a pandas DataFrame or if `metrics`
+            is not a list of strings.
+          type: TypeError
+        returns:
+          description: A tuple containing (identified_trends, trend_strengths, anomalies_detected).
+            The list lengths are equal and correspond to the same order.
+          type: Tuple[List[str], List[float], bool]
+        summary: Performs a quick exploratory analysis of macroeconomic data to identify
+          trends and detect anomalies.
     prompt: Conduct a preliminary analysis of the macroeconomic data to identify potential
       trends and patterns.
   conduct_trend_analysis:
@@ -108,6 +275,48 @@ nodes:
     - description: Summary of primary patterns identified in macroeconomic indicators
       key: key_patterns
       type: List[str]
+    prd:
+      conceptual_info: Analyzes preprocessed macroeconomic time series data to detect
+        directional trends, seasonal components, and magnitude of changes. Results
+        inform econometric modeling and policy analysis by quantifying temporal patterns
+        in economic indicators.
+      docstring:
+        examples:
+        - lines:
+          - 'economic_data = pd.DataFrame({''GDP'': [2.1, 2.3, 2.5], ''CPI'': [1.8,
+            1.9, 2.1]})'
+          - analyze_trends(economic_data, significance_level=0.05)
+          output: '{''trend_directions'': [''upward'', ''upward''], ''seasonality_patterns'':
+            [''none'', ''none''], ''trend_magnitudes'': [0.2, 0.15], ''is_significant_trend'':
+            [True, True], ''key_patterns'': [''GDP growth trend'', ''Moderate inflation
+            rise'']}'
+        - lines:
+          - 'economic_data = pd.DataFrame({''Unemployment'': [5.2, 5.1, 5.0]})'
+          - analyze_trends(economic_data)
+          output: '{''trend_directions'': [''downward''], ''seasonality_patterns'':
+            [''none''], ''trend_magnitudes'': [-0.1], ''is_significant_trend'': [False],
+            ''key_patterns'': [''Stable unemployment decline'']}'
+        parameters:
+        - description: Preprocessed macroeconomic time series data with datetime-indexed
+            observations
+          name: economic_data
+          type: pd.DataFrame
+        - description: Threshold for determining statistical significance (p-value
+            cutoff), default 0.05
+          name: significance_level
+          type: float
+        raises:
+        - description: If economic_data contains missing values or failed preprocessing
+          type: ValueError
+        - description: If economic_data is not a properly formatted DataFrame
+          type: TypeError
+        returns:
+          description: Dict containing five parallel arrays (trend_directions, seasonality_patterns,
+            trend_magnitudes, is_significant_trend, key_patterns) indexed by economic
+            indicator
+          type: Dict[str, Any]
+        summary: Applies statistical analysis to identify directional trends, seasonality,
+          and magnitude of change in macroeconomic time series data.
     prompt: Use established statistical methods (e.g., linear regression, ARIMA) to
       identify trends and seasonality in time series data, and assess the direction
       and magnitude of changes over time
@@ -127,12 +336,53 @@ nodes:
         (e.g., GDP growth rate, CPI inflation rate, unemployment rate).
       key: metrics
       type: List[str]
+    prd:
+      conceptual_info: This node defines the strategic economic goals and the quantitative
+        indicators that will guide the subsequent data collection, analysis, and modeling
+        phases of the macroeconomic workflow.
+      docstring:
+        examples:
+        - lines:
+          - result = define_macroeconomic_objectives("We aim to improve GDP growth,
+            control inflation, and reduce unemployment.")
+          - print(result['objectives'])
+          - print(result['metrics'])
+          output: '["GDP growth", "inflation control", "employment level"]
+
+            ["GDP growth rate", "CPI inflation rate", "unemployment rate"]'
+        - lines:
+          - result = define_macroeconomic_objectives("Focus on monetary policy effectiveness
+            and fiscal stimulus.")
+          - print(result)
+          output: '{"objectives": ["monetary policy effectiveness", "fiscal stimulus"],
+            "metrics": ["interest rate", "government spending growth"]}'
+        parameters:
+        - description: A natural‑language description of the desired macroeconomic
+            focus, typically provided by the user or higher‑level workflow. It may
+            contain examples of objectives or metrics.
+          name: input_text
+          type: str
+        raises:
+        - description: If the input_text is empty or does not contain any recognizable
+            objective/metric keywords.
+          type: ValueError
+        - description: If the underlying language model fails to generate a coherent
+            list of objectives or metrics.
+          type: RuntimeError
+        returns:
+          description: 'A dictionary with two keys: ''objectives'' and ''metrics'',
+            each mapping to a list of strings that enumerate the primary macroeconomic
+            objectives and their associated performance metrics.'
+          type: Dict[str, List[str]]
+        summary: Define macroeconomic objectives and associated performance metrics
+          for analysis.
     prompt: Identify the primary macroeconomic objectives and key performance metrics
       (e.g., GDP growth rate, inflation rate, unemployment rate) that will be analyzed.
   draw_implications_and_recommendations:
     agent: false
-    description: Synthesize findings and provide actionable insights for policymakers
-      and stakeholders.
+    description: Synthesizes the quantitative performance metrics of econometric models
+      into actionable policy guidance, communicating insights, caveats, and recommended
+      actions to policymakers and stakeholders.
     name: draw_implications_and_recommendations
     nodes_depended_on:
     - evaluate_model_performance
@@ -157,6 +407,73 @@ nodes:
         on the key macroeconomic objectives.
       key: impact_summary
       type: str
+    prd:
+      conceptual_info: The node takes the model evaluation metrics (MAE, RMSE, MAPE,
+        good_fit) produced by `evaluate_model_performance` and translates them into
+        a structured policy brief. It distills the most salient performance observations,
+        flags any methodological or data caveats, and translates findings into concrete
+        policy levers and implementation steps that can be communicated to decision
+        makers.
+      docstring:
+        examples:
+        - lines:
+          - result = draw_implications_and_recommendations(
+          - '    model_name=''Vector Autoregression'','
+          - '    mae=0.015,'
+          - '    rmse=0.020,'
+          - '    mape=3.2,'
+          - '    good_fit=True'
+          - )
+          output: "{\n  'key_insights': ['MAE and RMSE are within acceptable thresholds\
+            \ for short‑term forecasts.', 'MAPE < 5% indicates high relative accuracy.'],\n\
+            \  'caveats': ['Model performance evaluated on the most recent 12‑month\
+            \ window only.', 'Potential structural change in the economy not captured.'],\n\
+            \  'policy_recommendations': ['Maintain current fiscal stimulus to support\
+            \ growth.', 'Gradually tighten monetary policy to counteract inflationary\
+            \ pressures.'],\n  'action_items': ['Review fiscal policy mix in Q3 2026.',\
+            \ 'Schedule a monetary policy review meeting in Q1 2027.'],\n  'impact_summary':\
+            \ 'Recommended actions aim to sustain GDP growth while containing inflation,\
+            \ aligning with the macroeconomic objectives of the current policy framework.'\n\
+            }"
+        - lines:
+          - result = draw_implications_and_recommendations(
+          - '    model_name=''Unobserved Components Model'','
+          - '    mae=0.050,'
+          - '    rmse=0.080,'
+          - '    mape=12.5,'
+          - '    good_fit=False'
+          - )
+          output: 'RuntimeError: Model evaluation indicates insufficient fit for actionable
+            policy guidance.'
+        parameters:
+        - description: Identifier of the evaluated econometric model.
+          name: model_name
+          type: str
+        - description: Mean Absolute Error of the model predictions.
+          name: mae
+          type: float
+        - description: Root Mean Squared Error of the model predictions.
+          name: rmse
+          type: float
+        - description: Mean Absolute Percentage Error of the model predictions.
+          name: mape
+          type: float
+        - description: Indicator whether the model meets predefined goodness‑of‑fit
+            thresholds.
+          name: good_fit
+          type: bool
+        raises:
+        - description: If any required input is missing or of incorrect type.
+          type: ValueError
+        - description: If the model evaluation indicates that the model is invalid
+            (`good_fit` is False).
+          type: RuntimeError
+        returns:
+          description: A dictionary containing the keys `key_insights`, `caveats`,
+            `policy_recommendations`, `action_items`, and `impact_summary` as specified
+            in the node's output structure.
+          type: Dict[str, Any]
+        summary: Generate a policy brief from econometric model evaluation results.
     prompt: Communicate key insights and caveats to stakeholders, highlighting implications
       for decision-making and suggesting policy recommendations based on analysis
       results.
@@ -186,13 +503,81 @@ nodes:
         thresholds
       key: good_fit
       type: bool
+    prd:
+      conceptual_info: The Evaluate Model Performance node takes the forecasts, significant
+        drivers, and diagnostic flags produced by Apply Econometric Models and computes
+        a concise set of error metrics and a binary goodness‑of‑fit flag. The metrics—Mean
+        Absolute Error (MAE), Root Mean Squared Error (RMSE), and Mean Absolute Percentage
+        Error (MAPE)—provide quantitative evidence of predictive accuracy, while the
+        good_fit flag offers an immediate, policy‑ready indicator of model readiness
+        for decision‐making.
+      docstring:
+        examples:
+        - lines:
+          - result = evaluate_model_performance(
+          - '    model_name=''Vector Autoregression'','
+          - '    forecast_values=[102.5, 105.0, 107.3],'
+          - '    actual_values=[100.0, 106.0, 108.0],'
+          - '    mae_threshold=5.0,'
+          - '    rmse_threshold=4.0,'
+          - '    mape_threshold=2.0'
+          - )
+          output: '{''model_name'': ''Vector Autoregression'', ''mae'': 3.8333333333333335,
+            ''rmse'': 3.7416573867739413, ''mape'': 1.888888888888889, ''good_fit'':
+            True}'
+        - lines:
+          - result = evaluate_model_performance(
+          - '    model_name=''Unobserved Components Model'','
+          - '    forecast_values=[90.0, 92.0, 95.0],'
+          - '    actual_values=[100.0, 95.0, 98.0],'
+          - '    mae_threshold=3.0,'
+          - '    rmse_threshold=3.0,'
+          - '    mape_threshold=4.0'
+          - )
+          output: '{''model_name'': ''Unobserved Components Model'', ''mae'': 5.666666666666667,
+            ''rmse'': 6.082207795688476, ''mape'': 6.666666666666667, ''good_fit'':
+            False}'
+        parameters:
+        - description: The name of the econometric model (e.g., 'Vector Autoregression').
+          name: model_name
+          type: str
+        - description: List of forecasted macroeconomic values produced by the model.
+          name: forecast_values
+          type: list[float]
+        - description: Corresponding actual observed values against which forecasts
+            are compared.
+          name: actual_values
+          type: list[float]
+        - description: Optional MAE threshold below which the model is considered
+            acceptable.
+          name: mae_threshold
+          type: float
+        - description: Optional RMSE threshold below which the model is considered
+            acceptable.
+          name: rmse_threshold
+          type: float
+        - description: Optional MAPE threshold below which the model is considered
+            acceptable.
+          name: mape_threshold
+          type: float
+        raises:
+        - description: If forecast_values and actual_values have different lengths
+            or are empty.
+          type: ValueError
+        returns:
+          description: Dictionary with keys 'model_name', 'mae', 'rmse', 'mape', and
+            'good_fit' matching the output structure.
+          type: dict
+        summary: Compute MAE, RMSE, and MAPE for each econometric model and return
+          a structured summary with a goodness‑of‑fit flag.
     prompt: Evaluate the performance of econometric models using established metrics
       (e.g., Mean Absolute Error, Root Mean Squared Percentage Error, Mean Absolute
       Percentage Error), considering multiple evaluation criteria (e.g., goodness
       of fit, robustness to shocks). Output the results as a structured summary.
   identify_key_macroeconomic_drivers:
     agent: false
-    description: Determine the most influential macroeconomic variables and relationships.
+    description: Determine the most influential macroeconomic variables and the nature
+      of their relationships with a target macroeconomic indicator.
     name: identify_key_macroeconomic_drivers
     nodes_depended_on:
     - collect_economic_data
@@ -214,13 +599,77 @@ nodes:
         'negative').
       key: relationship_direction
       type: List[str]
+    prd:
+      conceptual_info: This node identifies the most critical macroeconomic drivers
+        by analyzing processed data and visual relationships, producing a ranked list
+        of variables with quantified importance and directional associations for downstream
+        econometric modeling.
+      docstring:
+        examples:
+        - lines:
+          - import pandas as pd
+          - '# Sample data frame'
+          - df = pd.DataFrame({
+          - '    ''GDP_growth'': [2.5, 2.7, 3.0, 2.9, 3.2],'
+          - '    ''Inflation'': [1.2, 1.3, 1.1, 1.4, 1.2],'
+          - '    ''Unemployment'': [5.0, 4.8, 4.6, 4.7, 4.5],'
+          - '    ''Interest_Rate'': [0.5, 0.6, 0.4, 0.5, 0.5]'
+          - '})'
+          - '# Potential drivers identified earlier'
+          - potential = ['Inflation', 'Unemployment', 'Interest_Rate']
+          - '# Identify key drivers'
+          - result = identify_key_macroeconomic_drivers(df, potential, 'GDP_growth')
+          - print(result['key_variables'])
+          - print(result['importance_scores'])
+          - print(result['relationship_strength'])
+          - print(result['relationship_direction'])
+          output: '[''Unemployment'', ''Inflation'', ''Interest_Rate'']
+
+            [0.95, 0.78, 0.65]
+
+            [0.92, 0.75, 0.60]
+
+            [''negative'', ''negative'', ''positive'']'
+        - lines:
+          - '# Handling error: target not in data'
+          - 'try:'
+          - '    identify_key_macroeconomic_drivers(df, potential, ''NonExistent'')'
+          - 'except ValueError as e:'
+          - '    print(e)'
+          output: '''target_indicator ''NonExistent'' not found in data columns.'''
+        parameters:
+        - description: Preprocessed macroeconomic time‑series data obtained from collect_economic_data.
+            Columns represent potential drivers and the target indicator.
+          name: data
+          type: pd.DataFrame
+        - description: List of variable names identified by identify_potential_macroeconomic_drivers.
+          name: potential_drivers
+          type: List[str]
+        - description: Column name of the macroeconomic indicator to be forecasted
+            (e.g., 'GDP_growth').
+          name: target_indicator
+          type: str
+        raises:
+        - description: Raised if target_indicator is not in data columns or potential_drivers
+            is empty.
+          type: ValueError
+        - description: Raised if correlation analysis fails due to insufficient data
+            points.
+          type: RuntimeError
+        returns:
+          description: 'Dictionary containing four lists: key_variables, importance_scores,
+            relationship_strength, and relationship_direction.'
+          type: Dict[str, List[Union[str, float]]]
+        summary: Identify key macroeconomic drivers and their relationships with the
+          target indicator.
     prompt: Select the most relevant macroeconomic variables based on their relative
       importance and potential impact on the economy. Determine the direction and
       strength of relationships between variables using graphical methods (e.g., scatter
       plots, heatmaps).
   identify_potential_macroeconomic_drivers:
     agent: false
-    description: Determine potential macroeconomic variables that may impact the economy.
+    description: Determine potential macroeconomic variables that may impact the economy
+      by analyzing trends and patterns identified in the preliminary data analysis.
     name: identify_potential_macroeconomic_drivers
     nodes_depended_on:
     - conduct_preliminary_data_analysis
@@ -230,5 +679,50 @@ nodes:
         drivers.
       key: potential_drivers
       type: List[str]
+    prd:
+      conceptual_info: The node extracts a list of candidate macroeconomic variables
+        that could influence the economy. It serves as an early filter before more
+        rigorous importance scoring.
+      docstring:
+        examples:
+        - lines:
+          - identified_trends = ['GDP growth', 'Inflation trend', 'Unemployment rate']
+          - trend_strengths = [0.02, 0.01, -0.015]
+          - anomalies_detected = False
+          - result = identify_potential_macroeconomic_drivers(identified_trends, trend_strengths,
+            anomalies_detected)
+          - print(result)
+          output: '{''potential_drivers'': [''GDP growth'', ''Inflation trend'', ''Unemployment
+            rate'']}'
+        - lines:
+          - identified_trends = ['Oil price spike']
+          - trend_strengths = [0.05]
+          - anomalies_detected = True
+          - result = identify_potential_macroeconomic_drivers(identified_trends, trend_strengths,
+            anomalies_detected)
+          - print(result)
+          output: '{''potential_drivers'': [''Oil price spike'']}'
+        parameters:
+        - description: Trends or pattern descriptors identified in the preliminary
+            data analysis.
+          name: identified_trends
+          type: List[str]
+        - description: Quantitative strength (e.g., slope or growth rate) associated
+            with each identified trend.
+          name: trend_strengths
+          type: List[float]
+        - description: Flag indicating whether any anomalies or irregular patterns
+            were detected during preliminary analysis.
+          name: anomalies_detected
+          type: bool
+        raises:
+        - description: Raised if input lists are empty or mismatched in length.
+          type: ValueError
+        returns:
+          description: A dictionary with a single key `potential_drivers` mapping
+            to a list of variable names that are plausible macroeconomic drivers.
+          type: Dict[str, List[str]]
+        summary: Identify potential macroeconomic drivers from preliminary analysis
+          results.
     prompt: Identify potential macroeconomic drivers based on the preliminary data
       analysis.
