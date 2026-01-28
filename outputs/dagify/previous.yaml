@@ -1,33 +1,64 @@
-dag_type: plain_text
-description: Conduct a comprehensive macroeconomic analysis, applying econometric
-  models to forecast performance and identify key drivers, while synthesizing findings
-  for stakeholders.
+dag_type: typed
+description: Generated workflow from UI.
 name: econometric_macroeconomic_analysis
 nodes:
   apply_econometric_models:
     agent: false
     description: Implement and evaluate econometric models to forecast macroeconomic
-      performance.
+      performance
     name: apply_econometric_models
     nodes_depended_on:
     - conduct_trend_analysis
     - identify_key_macroeconomic_drivers
     - identify_potential_macroeconomic_drivers
-    nodes_dependent_on:
-    - evaluate_model_performance
+    nodes_dependent_on: []
+    output_structure:
+    - description: Name of the econometric model used (e.g., 'Vector Autoregression',
+        'Unobserved Components Model')
+      key: model_name
+      type: str
+    - description: Numerical forecasts of macroeconomic performance metrics
+      key: forecast_values
+      type: List[float]
+    - description: List of statistically significant macroeconomic drivers included
+        in the model
+      key: significant_drivers
+      type: List[str]
+    - description: Quantitative metrics for model performance evaluation (e.g., MAE,
+        RMSE, R-squared)
+      key: evaluation_metrics
+      type: List[float]
+    - description: Indicates whether the model passed diagnostic checks (e.g., multicollinearity
+        tests)
+      key: is_model_valid
+      type: bool
     prompt: Apply established econometric models (e.g., Vector Autoregression, Unobserved
       Components Model) to forecast macroeconomic performance, incorporating identified
       key drivers and controlling for potential issues (e.g., multicollinearity, omitted
-      variable bias).
+      variable bias)
   collect_economic_data:
     agent: false
     description: Gather and preprocess macroeconomic data from reliable sources.
     name: collect_economic_data
     nodes_depended_on:
     - define_macroeconomic_objectives
-    nodes_dependent_on:
-    - conduct_trend_analysis
-    - identify_key_macroeconomic_drivers
+    nodes_dependent_on: []
+    output_structure:
+    - description: Names of data sources used (e.g., 'Bureau of Labor Statistics',
+        'World Bank').
+      key: data_source_names
+      type: List[str]
+    - description: Total number of data records retrieved across all sources.
+      key: data_records_count
+      type: int
+    - description: Indicates whether preprocessing (adjustments, normalization) completed
+        without errors.
+      key: preprocessing_successful
+      type: bool
+    - description: Any additional remarks or issues encountered during data collection
+        and preprocessing.
+      key: notes
+      type: str
     prompt: Source and extract macroeconomic data from reputable sources (e.g., Bureau
       of Labor Statistics, World Bank), including necessary adjustments and normalization.
   conduct_preliminary_data_analysis:
@@ -36,31 +67,66 @@ nodes:
     name: conduct_preliminary_data_analysis
     nodes_depended_on:
     - define_macroeconomic_objectives
-    nodes_dependent_on:
-    - identify_potential_macroeconomic_drivers
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of trend names or descriptors identified in the data
+      key: identified_trends
+      type: List[str]
+    - description: Quantitative strength (e.g., slope or growth rate) associated with
+        each identified trend
+      key: trend_strengths
+      type: List[float]
+    - description: Indicates whether any anomalies or irregular patterns were detected
+        during preliminary analysis
+      key: anomalies_detected
+      type: bool
     prompt: Conduct a preliminary analysis of the macroeconomic data to identify potential
       trends and patterns.
   conduct_trend_analysis:
     agent: false
     description: Analyze time series data to identify patterns and trends in macroeconomic
-      indicators.
+      indicators
     name: conduct_trend_analysis
     nodes_depended_on:
     - collect_economic_data
-    nodes_dependent_on:
-    - apply_econometric_models
+    nodes_dependent_on: []
+    output_structure:
+    - description: Textual description of identified trend directions (e.g., 'upward',
+        'downward', 'stable')
+      key: trend_directions
+      type: List[str]
+    - description: Identified seasonal patterns in time series data
+      key: seasonality_patterns
+      type: List[str]
+    - description: Numerical values representing trend magnitude (e.g., regression
+        coefficients)
+      key: trend_magnitudes
+      type: List[float]
+    - description: Indicator of whether trends are statistically significant
+      key: is_significant_trend
+      type: List[bool]
+    - description: Summary of primary patterns identified in macroeconomic indicators
+      key: key_patterns
+      type: List[str]
     prompt: Use established statistical methods (e.g., linear regression, ARIMA) to
       identify trends and seasonality in time series data, and assess the direction
-      and magnitude of changes over time.
+      and magnitude of changes over time
   define_macroeconomic_objectives:
     agent: false
-    description: Specify the key macroeconomic objectives and performance metrics
+    description: Specifies the key macroeconomic objectives and performance metrics
       for analysis.
     name: define_macroeconomic_objectives
     nodes_depended_on: []
-    nodes_dependent_on:
-    - collect_economic_data
-    - conduct_preliminary_data_analysis
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of primary macroeconomic objectives (e.g., GDP growth, inflation
+        control, employment level).
+      key: objectives
+      type: List[str]
+    - description: List of key performance metrics associated with each objective
+        (e.g., GDP growth rate, CPI inflation rate, unemployment rate).
+      key: metrics
+      type: List[str]
     prompt: Identify the primary macroeconomic objectives and key performance metrics
       (e.g., GDP growth rate, inflation rate, unemployment rate) that will be analyzed.
   draw_implications_and_recommendations:
@@ -71,20 +137,59 @@ nodes:
     nodes_depended_on:
     - evaluate_model_performance
     nodes_dependent_on: []
+    output_structure:
+    - description: Concise list of the most important insights derived from the model
+        evaluation.
+      key: key_insights
+      type: List[str]
+    - description: Potential limitations, uncertainties, or assumptions affecting
+        the reliability of the insights.
+      key: caveats
+      type: List[str]
+    - description: Specific policy actions or adjustments suggested to address the
+        identified economic issues.
+      key: policy_recommendations
+      type: List[str]
+    - description: Step‑by‑step actions stakeholders can take to implement the recommendations.
+      key: action_items
+      type: List[str]
+    - description: High‑level summary of the expected impact of the recommended actions
+        on the key macroeconomic objectives.
+      key: impact_summary
+      type: str
     prompt: Communicate key insights and caveats to stakeholders, highlighting implications
       for decision-making and suggesting policy recommendations based on analysis
       results.
   evaluate_model_performance:
     agent: false
-    description: Assess the accuracy and robustness of econometric models.
+    description: Assesses the accuracy and robustness of the econometric models produced
+      by the apply_econometric_models node, providing key quantitative metrics and
+      a quick fit indicator.
     name: evaluate_model_performance
     nodes_depended_on:
     - apply_econometric_models
-    nodes_dependent_on:
-    - draw_implications_and_recommendations
+    nodes_dependent_on: []
+    output_structure:
+    - description: Identifier or name of the model evaluated
+      key: model_name
+      type: str
+    - description: Mean Absolute Error of the model predictions
+      key: mae
+      type: float
+    - description: Root Mean Squared Error of the model predictions
+      key: rmse
+      type: float
+    - description: Mean Absolute Percentage Error of the model predictions
+      key: mape
+      type: float
+    - description: Indicator of whether the model meets predefined goodness‑of‑fit
+        thresholds
+      key: good_fit
+      type: bool
     prompt: Evaluate the performance of econometric models using established metrics
-      (e.g., Mean Absolute Error, Root Mean Squared Percentage Error), considering
-      multiple evaluation criteria (e.g., goodness of fit, robustness to shocks).
+      (e.g., Mean Absolute Error, Root Mean Squared Percentage Error, Mean Absolute
+      Percentage Error), considering multiple evaluation criteria (e.g., goodness
+      of fit, robustness to shocks). Output the results as a structured summary.
   identify_key_macroeconomic_drivers:
     agent: false
     description: Determine the most influential macroeconomic variables and relationships.
@@ -92,8 +197,23 @@ nodes:
     nodes_depended_on:
     - collect_economic_data
     - identify_potential_macroeconomic_drivers
-    nodes_dependent_on:
-    - apply_econometric_models
+    nodes_dependent_on: []
+    output_structure:
+    - description: List of identified key macroeconomic variables.
+      key: key_variables
+      type: List[str]
+    - description: Relative importance score for each key variable (higher indicates
+        greater influence).
+      key: importance_scores
+      type: List[float]
+    - description: Numeric strength of the relationship between each key variable
+        and the target macroeconomic indicator.
+      key: relationship_strength
+      type: List[float]
+    - description: Direction of the relationship for each key variable (e.g., 'positive',
+        'negative').
+      key: relationship_direction
+      type: List[str]
     prompt: Select the most relevant macroeconomic variables based on their relative
       importance and potential impact on the economy. Determine the direction and
       strength of relationships between variables using graphical methods (e.g., scatter
@@ -104,8 +224,11 @@ nodes:
     name: identify_potential_macroeconomic_drivers
     nodes_depended_on:
     - conduct_preliminary_data_analysis
-    nodes_dependent_on:
-    - apply_econometric_models
-    - identify_key_macroeconomic_drivers
+    nodes_dependent_on: []
+    output_structure:
+    - description: A list of macroeconomic variable names identified as potential
+        drivers.
+      key: potential_drivers
+      type: List[str]
     prompt: Identify potential macroeconomic drivers based on the preliminary data
       analysis.
